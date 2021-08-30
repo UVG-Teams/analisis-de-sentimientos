@@ -1,0 +1,91 @@
+---
+title: "LAB_5_analisis_de_sentimientos"
+author: "Francisco Rosal, Luca Rivera, Jose Block"
+output: html_document
+date: "8/29/2021"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Laboratorio 5. 
+## Analisis de sentimientos
+
+```{r echo=FALSE}
+library(readr)
+#library(tm)
+if (!require("tm"))    {install.packages("tm");   library("tm")}
+if (!require("dplyr"))    {install.packages("dplyr");   library("dplyr")}
+if (!require("tidytext"))    {install.packages("tidytext");   library("tidytext")}
+if (!require("stringr"))    {install.packages("stringr");   library("stringr")}
+if (!require("xml2"))    {install.packages("xml2");   library("xml2")}
+if (!require("SnowballC"))    {install.packages("SnowballC");   library("SnowballC")}
+if (!require("wordcloud"))    {install.packages("wordcloud");   library("wordcloud")}
+if (!require("RColorBrewer"))    {install.packages("RColorBrewer");   library("RColorBrewer")}
+if (!require("stylo"))    {install.packages("stylo");   library("stylo")}
+```
+
+```{r echo=FALSE}
+GrammarandProductReviews <- read_csv("./GrammarandProductReviews.csv")
+```
+Cuenta de NA's por columna:
+```{r echo=FALSE}
+sapply(GrammarandProductReviews, function(x) sum(is.na(x)))
+```
+
+Se eliminarán las columnas:
+
+- id: por cadencia de información.
+
+- reviews.userProvince: por alta cantidad de NA.
+
+- review.userCity: por alta cantidad de NA.
+
+- reviews.id: por cadencia de información y cantidad de NA.
+
+- reviews.didPurchase: por cantidad de NA - - - - - - - - - - - - - - - - - - - - - - -> (Podria ser importante)
+
+- reviews.numHelpful:por cadencia de información y cantidad de NA.
+
+- keys: por cadencia de información.
+
+- dates, no se hará nada con fechas.
+```{r echo=FALSE}
+df <- subset(GrammarandProductReviews, select = -c(1, 4, 5, 6, 7, 11, 12, 13, 14, 16, 17, 19, 22, 23))
+```
+
+Convertir el texto a mayúsculas o a minúsculas
+
+Quitar los caracteres especiales que aparecen como “#”,”@” o los apóstrofes.
+
+Quitar las url
+
+Revisar si hay emoticones y quitarlos(a menos que le den información)
+
+Quitar los signos de puntuación
+
+Quitar los artículos, preposiciones y conjunciones (stopwords)
+
+Quitar números si considera que interferirán en las predicciones.
+
+```{r echo=FALSE}
+colnames(df)
+df$reviews.text  <- str_replace_all(df$reviews.text, "[[:punct:]]", " ")
+df$reviews.title <- str_replace_all(df$reviews.title, "[[:punct:]]", " ")
+df$reviews.text  <- tolower(df$reviews.text)
+df$reviews.title <- tolower(df$reviews.title)
+df$reviews.text <- gsub('\\p{So}|\\p{Cn}', '', df$reviews.text, perl = TRUE)
+df$reviews.title <- gsub('\\p{So}|\\p{Cn}', '', df$reviews.title, perl = TRUE)
+df$reviews.text <- gsub('[0-9]+', '', df$reviews.text, perl = TRUE)
+df$reviews.title <- gsub('[0-9]+', '', df$reviews.title, perl = TRUE)
+
+stopwords_regex = paste(stopwords('en'), collapse = '\\b|\\b')
+stopwords_regex = paste0('\\b', stopwords_regex, '\\b')
+df$reviews.text = stringr::str_replace_all(df$reviews.text, stopwords_regex, '')
+head(df$reviews.text)
+df$reviews.title = stringr::str_replace_all(df$reviews.title, stopwords_regex, '')
+head(df$reviews.text)
+
+```
+
